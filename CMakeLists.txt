@@ -12,12 +12,12 @@ else()
 endif()
 
 find_package(Boost 1.41)
-if(Boost_FOUND)
-    include_directories(${Boost_INCLUDE_DIR})
-    message(STATUS "Boost found.")
-else()
+#if(Boost_FOUND)
+#    include_directories(${Boost_INCLUDE_DIR})
+#    message(STATUS "Boost found.")
+#else()
     message(STATUS "Boost *NOT* found.")
-endif()
+#endif()
 
 # disable deprecation warnings
 if(WIN32)

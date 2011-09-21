@@ -1,0 +1,10 @@
+FILE(GLOB headers ../../include/opengm/* ../../include/opengm/inference/*)
+
+if(HDF5_FOUND)
+  if(Boost_FOUND)
+    add_definitions(-DWITH_BOOST)
+  endif()
+  add_executable(opengm opengm.cxx ${headers})
+  target_link_libraries(opengm ${HDF5_CORE_LIBRARY})
+  install(TARGETS opengm RUNTIME DESTINATION bin)
+endif()

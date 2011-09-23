@@ -67,59 +67,71 @@ static Graph *lua_pushGraph (lua_State *L)
 
 static int Graph_new (lua_State *L)
 {
-  // args
+  // args:
+  int table_states = 1;
+  int table_args = 2;
+  int table_energies = 3;
 
+  // get sizes
+  size_t nb_variables = lua_objlen(L, 1);
+  size_t nb_factors = lua_objlen(L, 2);
+  size_t nb_energies = lua_objlen(L, 2);
+  assert(nb_energies == nb_factors);
 
-  // discrete state space and graphical model
-  size_t gridSize = 10;
-  std::vector<size_t> numbersOfStates(gridSize*gridSize, 3);
+  // create state space
+  std::vector<size_t> numbersOfStates(nb_variables, 2);
+  for (size_t i=0; i<nb_variables; ++i) {
+    lua_rawgeti(L, table_states, i+1);
+    numbersOfStates[i] = lua_tonumber(L, -1);
+    lua_pop(L, 1);
+  }
   Space *space = new Space(numbersOfStates.begin(), numbersOfStates.end());
+
+  // create graphical model
   GraphicalModel *gm = new GraphicalModel();
 
-  // single site factors
-  for(size_t j=0; j<space->dimension(); ++j) {
-    Factor factor(*space, &j, &j+1);
-    factor(0) = static_cast<Energy>(rand());
-    factor(1) = static_cast<Energy>(RAND_MAX) - factor(0);
-    factor(2) = static_cast<Energy>(rand());
-    gm->addFactor(factor);
-  }
+  // register all factors into graphical model
+  for (size_t i=0; i<nb_factors; ++i) {
+    // args (2 max for now)
+    size_t args[2];
 
-  // Potts factors
-  Energy alpha = 10000;
-  for(size_t y0=0; y0<gridSize; ++y0) {
-    for(size_t x0=0; x0<gridSize; ++x0) {
-      if(x0 != gridSize-1) {
-        size_t x1 = x0+1;
-        size_t y1 = y0;
-        size_t vi[] = {x0 + gridSize*y0, x1 + gridSize*y1};
-        Factor factor(*space, vi, vi+2);
-        factor(0,0) = 0.0;
-        factor(0,1) = alpha;
-        factor(1,0) = alpha;
-        factor(1,1) = 0.0;
-        factor(0,2) = 0.0;
-        factor(2,0) = alpha;
-        factor(1,2) = alpha;
-        factor(2,1) = 0.0;
-        gm->addFactor(factor);
-      }
-      if(y0 != gridSize-1) {
-        size_t x1 = x0;
-        size_t y1 = y0+1;
-        size_t vi[] = {x0 + gridSize*y0, x1 + gridSize*y1};
-        Factor factor(*space, vi, vi+2);
-        factor(0,0) = 0.0;
-        factor(0,1) = alpha;
-        factor(1,0) = alpha;
-        factor(1,1) = 0.0;
-        factor(0,2) = 0.0;
-        factor(2,0) = alpha;
-        factor(1,2) = alpha;
-        factor(2,1) = 0.0;
-        gm->addFactor(factor);
+    // get next arg list:
+    lua_rawgeti(L, table_args, i+1); size_t nargs = lua_objlen(L, -1);
+    assert(nargs<=2);
+
+    // get argument index
+    for (size_t l=0; l<nargs; ++l) {
+      lua_rawgeti(L, -1, l+1); args[l] = lua_tonumber(L,-1) - 1; lua_pop(L,1);
+    }
+    lua_pop(L, 1);
+
+    // declare factor
+    Factor factor(*space, args, args+nargs);
+  
+    // get next factor:
+    lua_rawgeti(L, table_energies, i+1);
+
+    // set energy for each state
+    int kkk = 1;
+    if (nargs == 1) {
+      for (size_t k=0; k<numbersOfStates[args[0]]; ++k) {
+        lua_rawgeti(L, -1, kkk++);
+        factor(k) = (Energy)lua_tonumber(L,-1); 
+        lua_pop(L,1);
+      } 
+    } else if (nargs == 2) {
+      for (size_t k=0; k<numbersOfStates[args[0]]; ++k) {
+        for (size_t l=0; l<numbersOfStates[args[1]]; ++l) {
+          lua_rawgeti(L, -1, kkk++);
+          factor(k,l) = (Energy)lua_tonumber(L,-1); 
+          lua_pop(L,1);
+        }
       }
     }
+    lua_pop(L, 1);
+
+    // register factor
+    gm->addFactor(factor);
   }
 
   // return graph
@@ -160,7 +172,8 @@ static int Graph_optimize (lua_State *L)
   g->state = state;
 
   // done
-  return 0;
+  lua_settop(L,1);
+  return 1;
 }
 
 static const luaL_reg Graph_methods[] = {

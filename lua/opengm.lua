@@ -83,28 +83,9 @@ Finally, the graph can be obtained like this:
 }
 
 ----------------------------------------------------------------------
--- a nice constructor to build graphs
---
-local function newgraph(self,...)
-   -- usage
-   local _, states, factors, energies, names = xlua.unpack(
-      {...},
-      'opengm.Graph', help.new,
-      {arg='states', type='table', help='a list of possible states, for each variable node', req=true},
-      {arg='factors', type='table', help='a list of all factors\' arguments', req=true},
-      {arg='energies', type='table', help='a list of all possible energies, for each factor', req=true},
-      {arg='names', type='table', help='a list of names, one per variable'}
-   )
-
-   -- create graph, straight from arguments
-   return opengm.Graph.new(states, factors, energies)
-end
-setmetatable(opengm.Graph, {__call = newgraph})
-
-----------------------------------------------------------------------
 -- visualize a graph
 --
-function opengm.Graph:show(...)
+local function showgraph(graph, ...)
    -- usage
    local _, save, show = xlua.unpack(
       {...},
@@ -115,6 +96,12 @@ function opengm.Graph:show(...)
 
    -- simple print
    print(self)
+
+   -- get structure from graph
+   local states = graph.states
+   local factors = graph.factors
+   local energies = graph.energies
+   local names = graph.names or {}
 
    -- then try to load luagraph package
    gr = xrequire 'graph'
@@ -132,7 +119,6 @@ function opengm.Graph:show(...)
                   comment = 'Graphical Model'}
 
    -- names ?
-   local names = names or {}
    for i in ipairs(states) do
       names[i] = names[i] or ('x' .. i)
    end
@@ -163,3 +149,33 @@ function opengm.Graph:show(...)
    end
    g:close()
 end
+
+----------------------------------------------------------------------
+-- a nice constructor to build graphs
+--
+local function newgraph(self,...)
+   -- usage
+   local _, states, factors, energies, names = xlua.unpack(
+      {...},
+      'opengm.Graph', help.new,
+      {arg='states', type='table', help='a list of possible states, for each variable node', req=true},
+      {arg='factors', type='table', help='a list of all factors\' arguments', req=true},
+      {arg='energies', type='table', help='a list of all possible energies, for each factor', req=true},
+      {arg='names', type='table', help='a list of names, one per variable'}
+   )
+
+   -- create graph, straight from arguments
+   local graph = opengm.Graph.new(states, factors, energies)
+
+   -- create larger container that retains structure tables as well
+   local complete = {graph=graph, states=states, factors=factors, 
+                     energies=energies, names=names}
+   complete.show = function(self,...) showgraph(self,...) end
+   complete.optimize = function(self,...) self.graph:optimize(...) end
+   complete.variables = function(self,...) self.states:states(...) end
+   setmetatable(complete, {__tostring = function(self) return tostring(self.graph) end})
+
+   -- return complete container
+   return complete
+end
+setmetatable(opengm.Graph, {__call = newgraph})

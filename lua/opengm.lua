@@ -151,6 +151,20 @@ local function showgraph(graph, ...)
 end
 
 ----------------------------------------------------------------------
+-- visualize a graph
+--
+local function optimize(graph, ...)
+   -- usage
+   local _, save, show = xlua.unpack(
+      {...},
+      'opengm.Graph:optimize()', 'optimize a graph (perform inference), ',
+      {arg='method', type='string', help='optimization method: beliefprop', default='beliefprop'},
+      {arg='iterations', type='number', help='max number of iterations'},
+      {arg='verbose', type='boolean', help='show', default=true}
+   )
+end
+
+----------------------------------------------------------------------
 -- a nice constructor to build graphs
 --
 local function newgraph(self,...)
@@ -171,8 +185,8 @@ local function newgraph(self,...)
    local complete = {graph=graph, states=states, factors=factors, 
                      energies=energies, names=names}
    complete.show = function(self,...) showgraph(self,...) end
-   complete.optimize = function(self,...) self.graph:optimize(...) end
-   complete.variables = function(self,...) self.states:states(...) end
+   complete.optimize = function(self,...) return self.graph:optimize(...) end
+   complete.variables = function(self,...) return self.graph:states(...) end
    setmetatable(complete, {__tostring = function(self) return tostring(self.graph) end})
 
    -- return complete container

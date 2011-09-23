@@ -20,7 +20,8 @@ description = {
 dependencies = {
    "lua >= 5.1",
    "torch",
-   "xlua"
+   "xlua",
+   "luagraph"
 }
 
 build = {

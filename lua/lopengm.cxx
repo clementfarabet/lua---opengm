@@ -176,9 +176,32 @@ static int Graph_optimize (lua_State *L)
   return 1;
 }
 
+static int Graph_states (lua_State *L)
+{
+  // args
+  Graph *g = lua_checkGraph(L, 1);
+
+  if (g->state == NULL) {
+    printf("<opengm> states are not available yet, call graph:optimze() first\n");
+    return 0;
+  }
+
+  // fill tensor with current config
+  THDoubleTensor *states = THDoubleTensor_newWithSize1d(g->space->dimension());
+  double *data = THDoubleTensor_data(states);
+  for(int y=0; y<g->state->size(); y++) {
+    data[y] = g->state->at(y);
+  }
+
+  // return tensor
+  luaT_pushudata(L, states, luaT_checktypename2id(L, "torch.DoubleTensor"));
+  return 1;
+}
+
 static const luaL_reg Graph_methods[] = {
   {"new",      Graph_new},
   {"optimize", Graph_optimize},
+  {"states",   Graph_states},
   {0, 0}
 };
 

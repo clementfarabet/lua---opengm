@@ -8,6 +8,7 @@ optimizing them with OpenGM.
 ## License
 
 LOpenGM Copyright (c) 2011 Clement Farabet (Lua Bindings)
+
 OpenGM  Copyright (c) 2010 by Bjoern Andres and Joerg Hendrik Kappes.
 
 This software was developed by Bjoern Andres and Joerg Hendrik Kappes.

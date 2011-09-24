@@ -1,6 +1,7 @@
 # LOpenGM: Lua bindings for OpenGM
 
-OpenGM is a C++ library for graphical modeling, and inference. The Lua
+[OpenGM](http://www.andres.sc/opengm) is a C++ library for graphical 
+modeling, and inference. The Lua
 bindings provide a simple way of describing graphs, from Lua, and then
 optimizing them with OpenGM.
 

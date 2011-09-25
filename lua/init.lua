@@ -179,7 +179,7 @@ local function optimize(graph, ...)
    local _, method, iterations, verbose = xlua.unpack(
       {...},
       'opengm.Graph:optimize', 'optimize a graph (perform inference), ',
-      {arg='method', type='string', help='optimization method: bp | a*', default='bp'},
+      {arg='method', type='string', help='optimization method: a* | bp | trbp | lf | icm', default='bp'},
       {arg='iterations', type='number', help='max number of iterations'},
       {arg='verbose', type='boolean', help='verbose'}
    )

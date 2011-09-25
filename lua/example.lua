@@ -4,10 +4,10 @@ require 'opengm'
 
 -- args
 op = xlua.OptionParser('%prog [options]')
-op:option{'-dp', '--display', action='store_true', dest='display',
+op:option{'-d', '--display', action='store_true', dest='display',
           help='display optimized graph (energies + states)'}
-op:option{'-mt', '--method', action='store', dest='method',
-          help='optimization method: bp | a*', default='bp'}
+op:option{'-m', '--method', action='store', dest='method',
+          help='optimization method: a* | bp | trbp | lf | icm', default='bp'}
 opt = op:parse()
 
 -- standard factors

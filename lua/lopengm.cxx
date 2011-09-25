@@ -28,6 +28,9 @@ typedef opengm::GraphicalModel<Factor, opengm::Adder> GraphicalModel;
 typedef std::vector<size_t> State;
 
 typedef opengm::BeliefPropagation<GraphicalModel, opengm::Minimizer, opengm::MaxDistance> BP;
+typedef opengm::TreeReweightedBeliefPropagation<GraphicalModel, opengm::Minimizer, opengm::MaxDistance> TRBP;
+typedef opengm::ICM<GraphicalModel, opengm::Minimizer> ICM;
+typedef opengm::LazyFlipper<GraphicalModel, opengm::Minimizer> LazyFlipper;
 typedef opengm::AStar<GraphicalModel, opengm::Minimizer> ASTAR;
 
 // class name
@@ -149,9 +152,11 @@ static int Graph_optimize (lua_State *L)
   Graph *g = lua_checkGraph(L, 1);
   GraphicalModel *gm = g->model;
   int max_steps = 100;
+  double damping = 0.0;
   const char *modec = lua_tostring(L,2);
   int verbose = lua_toboolean(L,3);
-  if (lua_isnumber(L,2)) max_steps = lua_tonumber(L,4);
+  if (lua_isnumber(L,4)) max_steps = lua_tonumber(L,4);
+  if (lua_isnumber(L,5)) damping = lua_tonumber(L,5);
   std::string mode(modec);
 
   // state is used to hold the result of optimization
@@ -159,19 +164,59 @@ static int Graph_optimize (lua_State *L)
 
   // algorithm select
   if (mode.compare("bp") == 0) {
-    // setup Belief Propagation
+    // setup Belief Propagation (BP)
     BP::Parameter para;
     para.maximumNumberOfSteps_ = max_steps;
-    para.damping_ = 0;
+    para.damping_ = damping;
     BP bp(*gm, para);
     if(verbose) {
-      std::cout << "<opengm> optimizing using Belief Propagation " << std::endl;
+      std::cout << "<opengm> optimizing using Belief Propagation (BP)" << std::endl;
       opengm::BeliefPropagationVerboseVisitor<BP> visitor;
       bp.infer(visitor);
     } else {
       bp.infer();
     }
     bp.arg(*state);
+
+  } else if (mode.compare("trbp") == 0) {
+    // setup Tree-Reweighted Belief Propagation (TRBP)
+    TRBP::Parameter para;
+    para.maximumNumberOfSteps_ = max_steps;
+    para.damping_ = damping;
+    TRBP trbp(*gm, para);
+    if (verbose) {
+      std::cout << "<opengm> optimizing using Tree-Reweighted Belief Propagation (TRBP)" << std::endl;
+      opengm::TreeReweightedBeliefPropagationVerboseVisitor<TRBP> visitor;
+      trbp.infer(visitor);
+    } else {
+      trbp.infer();
+    }
+    trbp.arg(*state);
+
+  } else if (mode.compare("icm") == 0) {
+    // setup Iterated conditional modes (ICM)
+    ICM icm(*gm);
+    if (verbose) {
+      std::cout << "<opengm> optimizing using Iterated Conditional Modes (ICM)" << std::endl;
+      opengm::ICMVerboseVisitor<ICM> visitor;
+      icm.infer(visitor);
+    } else {
+      icm.infer();
+    }
+    icm.arg(*state);
+
+  } else if (mode.compare("lf") == 0) {
+    // setup Lazy Flipper (LF)
+    marray::Vector<size_t> initialState(gm->space().dimension());
+    LazyFlipper flipper(*gm, 4, initialState.begin());
+    if (verbose) {
+      std::cout << "<opengm> optimizing using Lazy Flipper (LF)" << std::endl;
+      opengm::LazyFlipperVerboseVisitor<LazyFlipper> visitor;
+      flipper.infer(visitor);
+    } else {
+      flipper.infer();
+    }
+    flipper.arg(*state);
 
   } else if (mode.compare("a*") == 0) {
     // setup A*
@@ -187,7 +232,7 @@ static int Graph_optimize (lua_State *L)
     astar.arg(*state);
 
   } else {
-    THError("<opengm.Graph.optimize> method must be one of: a* | bp");
+    THError("<opengm.Graph.optimize> method must be one of: a* | bp | trbp | lf | icm");
   }
 
   // save optimal state

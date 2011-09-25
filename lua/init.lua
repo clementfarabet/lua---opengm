@@ -112,7 +112,7 @@ local function showgraph(graph, ...)
          elseif #factor == 2 then
             val = func(optstates[args[1]], optstates[args[2]])
          end
-         str = str .. ' [=' .. tostring(val) .. ']'
+         str = str .. ' [=' .. string.format('%0.2f',val) .. ']'
       end
       table.insert(gargs, node{'f'..i, label=str, shape='square'})
       for _,k in ipairs(factor) do

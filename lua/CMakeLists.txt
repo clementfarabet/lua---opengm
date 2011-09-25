@@ -11,4 +11,5 @@ target_link_libraries (lopengm ${TORCH_LIBRARIES})
 
 install_files(/lua/opengm init.lua)
 install_files(/lua/opengm factors.lua)
+install_files(/lua/opengm help.lua)
 install_targets(/lib lopengm)

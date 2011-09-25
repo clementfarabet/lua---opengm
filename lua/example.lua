@@ -2,6 +2,12 @@
 -- load opengm
 require 'opengm'
 
+-- args
+op = xlua.OptionParser('%prog [options]')
+op:option{'-dp', '--display', action='store_true', dest='display',
+          help='display optimized graph (energies + states)'}
+opt = op:parse()
+
 -- standard factors
 f = opengm.factors
 
@@ -25,5 +31,8 @@ g = opengm.Graph(variables, factors)
 g:optimize{verbose=true}
 
 -- show graph
-print(g)
---g:show{}
+if opt.display then
+   g:show{}
+else
+   print(g)
+end

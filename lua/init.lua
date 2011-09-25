@@ -28,6 +28,7 @@
 --              efficient inference.
 --
 -- history: 
+--     September 24, 2011, 9:07PM - first usable state - Clement Farabet
 --     September 23, 2011, 1:43AM - first skeleton - Clement Farabet
 ----------------------------------------------------------------------
 

@@ -124,12 +124,6 @@ A simple complete example:
 -- load opengm
 require 'opengm'
 
--- args
-op = xlua.OptionParser('%prog [options]')
-op:option{'-dp', '--display', action='store_true', dest='display',
-          help='display optimized graph (energies + states)'}
-opt = op:parse()
-
 -- standard factors
 f = opengm.factors
 
@@ -152,10 +146,24 @@ g = opengm.Graph(variables, factors)
 -- optimize graph
 g:optimize{verbose=true}
 
--- show graph
-if opt.display then
-   g:show{}
-else
-   print(g)
-end
+-- print graph
+print(g)
+```
+
+Running the script above outputs:
+
+```
+<opengm> optimizing... 
+step 1: E=3.99758, c=0
+step 2: E=3.63212, c=2.19722
+step 3: E=3.63212, c=2.19722
+<opengm.Graph>
+  + nb of variables: 4
+  + nb of factors: 6
+  + graph is acyclic
+  + current (optimized) variable states: 
+    - car [0]
+    - person [0]
+    - building [0]
+    - street [1]
 ```

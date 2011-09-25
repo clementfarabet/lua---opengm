@@ -9,5 +9,6 @@ add_library (lopengm SHARED lopengm.cxx ${headers})
 link_directories (${TORCH_LIBRARY_DIR})
 target_link_libraries (lopengm ${TORCH_LIBRARIES})
 
-install_files(/lua opengm.lua)
+install_files(/lua/opengm init.lua)
+install_files(/lua/opengm factors.lua)
 install_targets(/lib lopengm)

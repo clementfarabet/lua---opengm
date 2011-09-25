@@ -231,18 +231,6 @@ static int Graph_tostring (lua_State *L)
     else
       str += "\n  + graph has cycles";
   }
-  if (g->state) {
-    str += "\n  + current (optimized) variable states: ";
-    str += "\n    ";
-    int i = 0;
-    for(int y=0; y<g->state->size(); y++) {
-      if (((i%20)==0) && i>0) str += "\n    ";
-      std::stringstream ss;
-      ss << g->state->at(y);
-      str += ss.str() + " ";
-      i++;
-    }
-  }
   lua_pushfstring(L, "%s", str.c_str());
   return 1;
 }

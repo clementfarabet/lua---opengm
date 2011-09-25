@@ -32,7 +32,7 @@
 ----------------------------------------------------------------------
 
 require 'torch'
-require 'image'
+require 'xlua'
 
 -- create global opengm table:
 opengm = {}
@@ -40,7 +40,10 @@ opengm = {}
 -- c lib:
 require 'liblopengm'
 
--- help stirngs:
+-- submodules:
+dofile(sys.concat(sys.fpath(),'factors.lua'))
+
+-- help strings:
 local help = {
    new = [[
 This function creates a new graphical model. Here is a simple
@@ -89,19 +92,20 @@ local function showgraph(graph, ...)
    -- usage
    local _, save, show = xlua.unpack(
       {...},
-      'opengm.Graph:show()', 'render the graph using luagraph/graphviz',
+      'opengm.Graph:show', 'render the graph using luagraph/graphviz',
       {arg='save', type='string', help='save to file (png)'},
       {arg='show', type='boolean', help='show', default=true}
    )
 
    -- simple print
-   print(self)
+   print(graph)
 
    -- get structure from graph
    local states = graph.states
    local factors = graph.factors
    local energies = graph.energies
-   local names = graph.names or {}
+   local functions = graph.functions
+   local names = graph.variables or {}
 
    -- then try to load luagraph package
    gr = xrequire 'graph'
@@ -123,9 +127,14 @@ local function showgraph(graph, ...)
       names[i] = names[i] or ('x' .. i)
    end
 
+   -- are states available ?
+   local optstates = g:getstates() or {}
+
    -- insert variable nodes
    for i,states in ipairs(states) do
-      table.insert(gargs, node{'v'..i, label=names[i]})
+      local name = names[i]
+      if optstates[i] then name = name .. ' [=' .. optstates[i] .. ']' end
+      table.insert(gargs, node{'v'..i, label=name})
    end
 
    -- insert factor nodes and their edges
@@ -133,6 +142,17 @@ local function showgraph(graph, ...)
       local str = 'f('..names[factor[1]]
       if factor[2] then str = str .. ',' .. names[factor[2]] end
       str = str .. ')'
+      if optstates[1] then
+         local func = functions[i][1]
+         local args = functions[i][2]
+         local val
+         if #factor == 1 then
+            val = func(optstates[args[1]])
+         elseif #factor == 2 then
+            val = func(optstates[args[1]], optstates[args[2]])
+         end
+         str = str .. ' [=' .. tostring(val) .. ']'
+      end
       table.insert(gargs, node{'f'..i, label=str, shape='square'})
       for _,k in ipairs(factor) do
          table.insert(gargs, edge{'f'..i, 'v'..k, color='red'})
@@ -151,17 +171,35 @@ local function showgraph(graph, ...)
 end
 
 ----------------------------------------------------------------------
--- visualize a graph
+-- optimize a graph
 --
 local function optimize(graph, ...)
    -- usage
-   local _, save, show = xlua.unpack(
+   local _, method, iterations, verbose = xlua.unpack(
       {...},
-      'opengm.Graph:optimize()', 'optimize a graph (perform inference), ',
+      'opengm.Graph:optimize', 'optimize a graph (perform inference), ',
       {arg='method', type='string', help='optimization method: beliefprop', default='beliefprop'},
       {arg='iterations', type='number', help='max number of iterations'},
-      {arg='verbose', type='boolean', help='show', default=true}
+      {arg='verbose', type='boolean', help='verbose'}
    )
+
+   -- optimize
+   graph.graph:optimize(iterations, verbose)
+end
+
+----------------------------------------------------------------------
+-- optimize a graph
+--
+local function graphtostring(graph)
+   local str = tostring(graph.graph)
+   local optstates = graph:getstates()
+   if optstates and graph.variables then
+      str = str .. '\n  + current (optimized) variable states: '
+      for i,name in ipairs(graph.variables) do
+         str = str .. '\n    - ' .. name .. ' [' .. optstates[i] .. ']'
+      end
+   end
+   return str
 end
 
 ----------------------------------------------------------------------
@@ -169,25 +207,60 @@ end
 --
 local function newgraph(self,...)
    -- usage
-   local _, states, factors, energies, names = xlua.unpack(
+   local _, variables, factors = xlua.unpack(
       {...},
       'opengm.Graph', help.new,
-      {arg='states', type='table', help='a list of possible states, for each variable node', req=true},
-      {arg='factors', type='table', help='a list of all factors\' arguments', req=true},
-      {arg='energies', type='table', help='a list of all possible energies, for each factor', req=true},
-      {arg='names', type='table', help='a list of names, one per variable'}
+      {arg='variables', type='table', help='a list of variables: {{varname1,nbstates}, {varname2,nbstates}, ...}', req=true},
+      {arg='factors', type='table', help='a list of factors: {{factor1,arg1[,arg2]}, {factor2,arg1[,arg2]}, ...}', req=true}
    )
+
+   -- variables may contain their possible states
+   local states = {}
+   for i,var in ipairs(variables) do
+      if type(var) == 'table' then
+         variables[i] = var[1]
+         states[i] = var[2]
+      else
+         -- default nb of states: binary
+         states[i] = 2
+      end
+   end
+
+   -- evaluate energies for all factors
+   local energies = {}
+   local functions = factors
+   local factors = {}
+   for i,factor in ipairs(functions) do
+      local en = factor[1]
+      local args = factor[2]
+      energies[i] = {}
+      local tab = energies[i]
+      if #args == 1 then -- unary factor
+         -- eval energy for all states
+         for s = 0,states[args[1]]-1 do
+            table.insert(tab, en(s))
+         end
+      elseif #args == 2 then -- 2-term factor
+         -- eval energy for all states
+         for s1 = 0,states[args[1]]-1 do
+            for s2 = 0,states[args[2]]-1 do
+               table.insert(tab, en(s1,s2))
+            end
+         end
+      end
+      factors[i] = args
+   end
 
    -- create graph, straight from arguments
    local graph = opengm.Graph.new(states, factors, energies)
 
    -- create larger container that retains structure tables as well
    local complete = {graph=graph, states=states, factors=factors, 
-                     energies=energies, names=names}
+                     functions = functions, energies=energies, variables=variables}
    complete.show = function(self,...) showgraph(self,...) end
-   complete.optimize = function(self,...) return self.graph:optimize(...) end
-   complete.variables = function(self,...) return self.graph:states(...) end
-   setmetatable(complete, {__tostring = function(self) return tostring(self.graph) end})
+   complete.optimize = function(self,...) return optimize(self,...) end
+   complete.getstates = function(self,...) return self.graph:states(...) end
+   setmetatable(complete, {__tostring = function(self) return graphtostring(self) end})
 
    -- return complete container
    return complete

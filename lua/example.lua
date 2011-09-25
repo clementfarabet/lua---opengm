@@ -6,6 +6,8 @@ require 'opengm'
 op = xlua.OptionParser('%prog [options]')
 op:option{'-dp', '--display', action='store_true', dest='display',
           help='display optimized graph (energies + states)'}
+op:option{'-mt', '--method', action='store', dest='method',
+          help='optimization method: bp | a*', default='bp'}
 opt = op:parse()
 
 -- standard factors
@@ -16,10 +18,10 @@ variables = {'car', 'person', 'building', 'street'}
 
 -- define factors
 factors = {-- unary factors (prior probabilities of each class):
-           {f.prior(0.1), {1}},
-           {f.prior(0.1), {2}},
-           {f.prior(0.51),{3}},
-           {f.prior(0.6), {4}},
+           {f.prior(0.01), {1}},
+           {f.prior(0.01), {2}},
+           {f.prior(0.7),  {3}},
+           {f.prior(0.8),  {4}},
            -- Potts factors (joint probabilities):
            {f.joint(0),   {1, 2}},
            {f.joint(0),   {3, 4}}}
@@ -28,7 +30,7 @@ factors = {-- unary factors (prior probabilities of each class):
 g = opengm.Graph(variables, factors)
 
 -- optimize graph
-g:optimize{verbose=true}
+g:optimize{method=opt.method, verbose=true}
 
 -- show graph
 if opt.display then

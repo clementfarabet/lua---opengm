@@ -26,7 +26,9 @@ typedef opengm::DiscreteSpace Space;
 typedef opengm::ExplicitFactor<Energy> Factor;
 typedef opengm::GraphicalModel<Factor, opengm::Adder> GraphicalModel;
 typedef std::vector<size_t> State;
+
 typedef opengm::BeliefPropagation<GraphicalModel, opengm::Minimizer, opengm::MaxDistance> BP;
+typedef opengm::AStar<GraphicalModel, opengm::Minimizer> ASTAR;
 
 // class name
 #define GRAPH "opengm.Graph"
@@ -147,27 +149,48 @@ static int Graph_optimize (lua_State *L)
   Graph *g = lua_checkGraph(L, 1);
   GraphicalModel *gm = g->model;
   int max_steps = 100;
-  if (lua_isnumber(L,2)) max_steps = lua_tonumber(L,2);
+  const char *modec = lua_tostring(L,2);
   int verbose = lua_toboolean(L,3);
+  if (lua_isnumber(L,2)) max_steps = lua_tonumber(L,4);
+  std::string mode(modec);
 
-  // setup Belief Propagation
+  // state is used to hold the result of optimization
   State *state = new State(gm->space().dimension());
-  BP::Parameter para;
-  para.maximumNumberOfSteps_ = max_steps;
-  para.damping_ = 0;
-  BP bp(*gm, para);
 
-  // optimize
-  if(verbose) {
-    std::cout << "<opengm> optimizing... " << std::endl;
-    opengm::BeliefPropagationVerboseVisitor<BP> visitor;
-    bp.infer(visitor);
+  // algorithm select
+  if (mode.compare("bp") == 0) {
+    // setup Belief Propagation
+    BP::Parameter para;
+    para.maximumNumberOfSteps_ = max_steps;
+    para.damping_ = 0;
+    BP bp(*gm, para);
+    if(verbose) {
+      std::cout << "<opengm> optimizing using Belief Propagation " << std::endl;
+      opengm::BeliefPropagationVerboseVisitor<BP> visitor;
+      bp.infer(visitor);
+    } else {
+      bp.infer();
+    }
+    bp.arg(*state);
+
+  } else if (mode.compare("a*") == 0) {
+    // setup A*
+    ASTAR::Parameter para;
+    ASTAR astar(*gm, para);
+    if(verbose) {
+      std::cout << "<opengm> optimizing using A* " << std::endl;
+      opengm::AStarVisitor<ASTAR,true> visitor;
+      astar.infer(visitor);
+    } else {
+      astar.infer();
+    }
+    astar.arg(*state);
+
   } else {
-    bp.infer();
+    THError("<opengm.Graph.optimize> method must be one of: a* | bp");
   }
 
   // save optimal state
-  bp.arg(*state);
   if (g->state) delete g->state;
   g->state = state;
 

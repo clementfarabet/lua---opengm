@@ -128,23 +128,30 @@ require 'opengm'
 f = opengm.factors
 
 -- define variables
-variables = {'car', 'person', 'building', 'street'}
+variables = {'car', 'person', 'building', 'street', 'vehicle'}
 
 -- define factors
 factors = {-- unary factors (prior probabilities of each class):
-           {f.prior(0.1), {1}},
-           {f.prior(0.1), {2}},
-           {f.prior(0.51),{3}},
-           {f.prior(0.6), {4}},
+           {f.prior(0.9), {1}},
+           {f.prior(0.01), {2}},
+           {f.prior(0.7),  {3}},
+           {f.prior(0.8),  {4}},
+           {f.prior(0.4),  {5}},
            -- Potts factors (joint probabilities):
-           {f.joint(0),   {1, 2}},
-           {f.joint(0),   {3, 4}}}
+           {f.band(0),     {1, 2}},
+           {f.band(0),     {2, 3}},
+           {f.band(0),     {3, 4}},
+           {f.band(0),     {1, 3}},
+           {f.band(0),     {3, 5}},
+           {f.band(0),     {4, 5}},
+           {f.band(0),     {2, 5}},
+           {f.bimplies(1), {1, 5}}}
 
 -- create graph
 g = opengm.Graph(variables, factors)
 
 -- optimize graph
-g:optimize{verbose=true}
+g:optimize{method='a*', verbose=true}
 
 -- print graph
 print(g)
@@ -162,8 +169,9 @@ step 3: E=3.63212, c=2.19722
   + nb of factors: 6
   + graph is acyclic
   + current (optimized) variable states: 
-    - car [0]
+    - car [1]
     - person [0]
     - building [0]
-    - street [1]
+    - street [0]
+    - vehicle [1]
 ```

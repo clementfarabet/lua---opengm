@@ -2,9 +2,9 @@
 -- factors is table that defines standard factor functions
 opengm.factors = {}
 
--- epsilon: the minimum probabilty that we want to be able to 
+-- epsilon: the minimum probabilty that we want to be able to
 -- represent (a proba of 0 is an infinite energy)
-local eps = 1e-20
+local eps = 1e-15
 
 -- neutral energy: no prior
 opengm.factors.noprior = function()
@@ -15,7 +15,7 @@ opengm.factors.noprior = function()
 
 -- standard unary energy/prior
 opengm.factors.prior = function(proba)
-                          proba = math.max(proba,eps)
+                          proba = math.min(1-eps,math.max(proba,eps))
                           return function(x)
                                     if x == 1 then return -math.log(proba)
                                     else return -math.log(1-proba) end
@@ -24,16 +24,16 @@ opengm.factors.prior = function(proba)
 
 -- probabilty of x1 and x2 both active:
 opengm.factors.band = function(proba)
-                        proba = math.max(proba,eps)
-                        return function(x1,x2)
-                                  if ((x1 == x2) and (x1 == 1)) then return -math.log(proba)
-                                  else return -math.log((1-proba)/3) end
-                               end
-                     end
+                         proba = math.min(1-eps,math.max(proba,eps))
+                         return function(x1,x2)
+                                   if ((x1 == x2) and (x1 == 1)) then return -math.log(proba)
+                                   else return -math.log((1-proba)/3) end
+                                end
+                      end
 
 -- probabilty of neither x1 nor x2 active:
 opengm.factors.bnor = function(proba)
-                         proba = math.max(proba,eps)
+                         proba = math.min(1-eps,math.max(proba,eps))
                          return function(x1,x2)
                                    if ((x1 == x2) and (x1 == 0)) then return -math.log(proba)
                                    else return -math.log((1-proba)/3) end
@@ -42,7 +42,7 @@ opengm.factors.bnor = function(proba)
 
 -- probabilty of either x1 or x2, but not both:
 opengm.factors.bneq = function(proba)
-                         proba = math.max(proba,eps)
+                         proba = math.min(1-eps,math.max(proba,eps))
                          return function(x1,x2)
                                    if (x1 ~= x2) then return -math.log(proba/2)
                                    else return -math.log((1-proba)/2) end
@@ -51,7 +51,7 @@ opengm.factors.bneq = function(proba)
 
 -- probabilty of x1 == x2:
 opengm.factors.beq = function(proba)
-                        proba = math.max(proba,eps)
+                        proba = math.min(1-eps,math.max(proba,eps))
                         return function(x1,x2)
                                   if (x1 == x2) then return -math.log(proba/2)
                                   else return -math.log((1-proba)/2) end
@@ -60,7 +60,7 @@ opengm.factors.beq = function(proba)
 
 -- probabilty of x1 => x2 (implication):
 opengm.factors.bimplies = function(proba)
-                             proba = math.max(proba,eps)
+                             proba = math.min(1-eps,math.max(proba,eps))
                              return function(x1,x2)
                                        if (x1 == 0) or (x2 == 1) then return -math.log(proba/3)
                                        else return -math.log((1-proba)) end

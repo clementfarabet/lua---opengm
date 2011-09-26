@@ -188,6 +188,16 @@ local function newgraph(self,...)
       end
    end
 
+   -- construct inverted index, if args are given as strings
+   local lookup = {}
+   if type(factors[1][2][1]) == 'string' then
+      for i,key in ipairs(variables) do 
+         lookup[key] = i
+      end
+   else
+      lookup = nil
+   end
+
    -- evaluate energies for all factors
    local energies = {}
    local functions = factors
@@ -195,6 +205,9 @@ local function newgraph(self,...)
    for i,factor in ipairs(functions) do
       local en = factor[1]
       local args = factor[2]
+      if lookup then
+         for i,arg in ipairs(args) do args[i] = lookup[arg] end
+      end
       energies[i] = {}
       local tab = energies[i]
       if #args == 1 then -- unary factor

@@ -18,20 +18,20 @@ variables = {'car', 'person', 'building', 'street', 'vehicle'}
 
 -- define factors
 factors = {-- unary factors (prior probabilities of each class):
-           {f.prior(0.9), {1}},
-           {f.prior(0.01), {2}},
-           {f.prior(0.7),  {3}},
-           {f.prior(0.8),  {4}},
-           {f.prior(0.4),  {5}},
+           {f.prior(0.9),  {'car'}},
+           {f.prior(0.01), {'person'}},
+           {f.prior(0.7),  {'building'}},
+           {f.prior(0.8),  {'street'}},
+           {f.prior(0.4),  {'vehicle'}},
            -- Potts factors (joint probabilities):
-           {f.band(0),     {1, 2}},
-           {f.band(0),     {2, 3}},
-           {f.band(0),     {3, 4}},
-           {f.band(0),     {1, 3}},
-           {f.band(0),     {3, 5}},
-           {f.band(0),     {4, 5}},
-           {f.band(0),     {2, 5}},
-           {f.bimplies(1), {1, 5}}}
+           {f.band(0),     {'car',      'person'}},
+           {f.band(0),     {'person',   'building'}},
+           {f.band(0),     {'building', 'street'}},
+           {f.band(0),     {'car',      'building'}},
+           {f.band(0),     {'building', 'vehicle'}},
+           {f.band(0),     {'street',   'vehicle'}},
+           {f.band(0),     {'person',   'vehicle'}},
+           {f.bimplies(1), {'car',      'vehicle'}}}
 
 -- create graph
 g = opengm.Graph(variables, factors)

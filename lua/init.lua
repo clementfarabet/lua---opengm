@@ -89,7 +89,7 @@ local function showgraph(graph, ...)
    end
 
    -- are states available ?
-   local optstates = g:getstates() or {}
+   local optstates = graph:getstates() or {}
 
    -- insert variable nodes
    for i,states in ipairs(states) do
@@ -136,7 +136,7 @@ end
 --
 local function optimize(graph, ...)
    -- usage
-   local _, method, iterations, verbose = xlua.unpack(
+   local _, method, verbose, iterations, damping = xlua.unpack(
       {...},
       'opengm.Graph:optimize', help.optimize,
       {arg='method', type='string', help='optimization method: a* | bp | trbp | lf | icm', default='bp'},

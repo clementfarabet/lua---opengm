@@ -110,9 +110,18 @@ static int Graph_new (lua_State *L)
     }
     lua_pop(L, 1);
 
+    // args have to be monotonic (why?)
+    bool flipped = false;
+    if ((nargs == 2) && (args[0] > args[1])) {
+      size_t tmp = args[0];
+      args[0] = args[1];
+      args[1] = tmp;
+      flipped = true;
+    }
+
     // declare factor
     Factor factor(*space, args, args+nargs);
-  
+
     // get next factor:
     lua_rawgeti(L, table_energies, i+1);
 
@@ -121,14 +130,17 @@ static int Graph_new (lua_State *L)
     if (nargs == 1) {
       for (size_t k=0; k<numbersOfStates[args[0]]; ++k) {
         lua_rawgeti(L, -1, kkk++);
-        factor(k) = (Energy)lua_tonumber(L,-1); 
+        factor(k) = (Energy)lua_tonumber(L,-1);
         lua_pop(L,1);
-      } 
+      }
     } else if (nargs == 2) {
       for (size_t k=0; k<numbersOfStates[args[0]]; ++k) {
         for (size_t l=0; l<numbersOfStates[args[1]]; ++l) {
           lua_rawgeti(L, -1, kkk++);
-          factor(k,l) = (Energy)lua_tonumber(L,-1); 
+          if (flipped)
+            factor(l,k) = (Energy)lua_tonumber(L,-1);
+          else
+            factor(k,l) = (Energy)lua_tonumber(L,-1);
           lua_pop(L,1);
         }
       }

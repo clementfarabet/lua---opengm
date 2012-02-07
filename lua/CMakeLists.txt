@@ -1,15 +1,12 @@
 
 # find Torch7
-string (REGEX REPLACE "(.*)lib/luarocks/rocks.*" "\\1" TORCH_PREFIX "${CMAKE_INSTALL_PREFIX}" )
-message (STATUS "Found Torch7, installed in: " ${TORCH_PREFIX})
 find_package (Torch REQUIRED)
 
-include_directories (${TORCH_INCLUDE_DIR})
-add_library (lopengm SHARED lopengm.cxx ${headers})
-link_directories (${TORCH_LIBRARY_DIR})
-target_link_libraries (lopengm ${TORCH_LIBRARIES})
+SET(src lopengm.cxx ${headers})
+SET(luasrc)
+ADD_TORCH_PACKAGE(lopengm "${src}" "${luasrc}" "Graphs")
+TARGET_LINK_LIBRARIES(lopengm luaT TH)
 
-install_files(/lua/opengm init.lua)
-install_files(/lua/opengm factors.lua)
-install_files(/lua/opengm help.lua)
-install_targets(/lib lopengm)
+SET(src)
+SET(luasrc init.lua factors.lua help.lua)
+ADD_TORCH_PACKAGE(opengm "${src}" "${luasrc}" "Graphs")

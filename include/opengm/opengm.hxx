@@ -43,6 +43,7 @@
 #ifndef OPENGM_HXX
 #define OPENGM_HXX
 
+#include <stddef.h>
 #include <stdexcept>
 #include <functional>
 

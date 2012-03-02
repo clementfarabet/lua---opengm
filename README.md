@@ -5,6 +5,9 @@ modeling, and inference. The Lua
 bindings provide a simple way of describing graphs, from Lua, and then
 optimizing them with OpenGM.
 
+Note: this package is superseded by 'gm', a more general and
+simple (pure Lua) package for graphical models.
+
 ## License
 
 LOpenGM Copyright (c) 2011 Clement Farabet (Lua Bindings)
@@ -49,46 +52,38 @@ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
 OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-## Install dependencies 
+## Install 
 
-1/ third-party libraries:
+1/ Torch7 is required:
 
-On Linux (Ubuntu > 9.04):
-
-``` sh
-$ apt-get install gcc g++ git libreadline5-dev cmake graphviz
-```
-
-On Mac OS (Leopard, or more), using [Homebrew](http://mxcl.github.com/homebrew/):
+Dependencies, on Linux (Ubuntu > 9.04):
 
 ``` sh
-$ brew install git readline cmake graphviz
+$ apt-get install gcc g++ git libreadline5-dev cmake wget libqt4-core libqt4-gui libqt4-dev
 ```
 
-2/ Lua 5.1 + Luarocks + xLua:
+Dependencies, on Mac OS (Leopard, or more), using [Homebrew](http://mxcl.github.com/homebrew/):
 
 ``` sh
-$ git clone https://github.com/clementfarabet/lua4torch
-$ cd lua4torch
-$ make install PREFIX=/usr/local
+$ brew install git readline cmake wget qt
 ```
 
-3/ opengm:
-
-clone this repo and then:
+Then on both platforms:
 
 ``` sh
-$ luarocks make
+$ git clone https://github.com/andresy/torch
+$ cd torch
+$ mkdir build; cd build
+$ cmake ..
+$ make
+$ [sudo] make install
 ```
 
-or, without the repo:
+2/ Once Torch7 is available, install this package:
 
 ``` sh
-$ luarocks install opengm
+$ [sudo] torch-pkg install opengm
 ```
-
-(for info: this will first install Torch7, which is used to efficiently
-represent N-dim arrays, for variables, factors, ...)
 
 ## Use the library
 
